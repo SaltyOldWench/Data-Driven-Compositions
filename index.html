@@ -1,7 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <title>dreamscape</title>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/gh/netizenorg/netnet-standard-library/build/nn.min.js"></script>
+  <script src="https://unpkg.com/hydra-synth@1.3.29/dist/hydra-synth.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: black;
+      overflow: hidden;
+      font-family: 'VT323', monospace;
+    }
+
+    #hit-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #111;
+      color: white;
+      border: 1px solid #444;
+      padding: 16px 30px;
+      font-size: 2rem;
+      cursor: pointer;
+      z-index: 10;
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
+
+    #hit-btn:hover {
+      background: #222;
+    }
+  </style>
+</head>
+<body>
+  <button id="hit-btn">HIT-ONCE</button>
+</body>
+
 <script>
+  let hydra;
+  let canvas;
+  let hydraStarted = false;
 
-const date = moment().format('MMMM Do YYYY, h:mm:ss a')
+    function setupHydra() {
+      canvas = nn.create('canvas').addTo('body');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      hydra = new Hydra({ canvas, detectAudio: false });
+      runVisuals();
+      setInterval(runVisuals, 1000);
+    }
 
-console.log(date)
-  
+    function runVisuals() {
+      const now = new Date();
+      const seconds = now.getSeconds() / 60;
+      const minutes = now.getMinutes() / 60;
+      const sinTime = Math.sin(Date.now() / 1000);
+      const time = Date.now() / 1000;
+
+      let layer1 = osc(5 + seconds * 30, 0.1 + minutes * 0.5, 1.2)
+        .rotate(() => 0.2 * Math.sin(time / 3))
+        .modulateScrollX(osc(1).rotate(1), 0.2)
+        .color(
+          0.2 + 0.4 * Math.sin(time * 0.7),
+          0.3 + 0.3 * Math.cos(time * 0.7),
+          0.4 + 0.2 * Math.sin(time * 0.7)
+        )
+        .kaleid(3 + Math.floor(3 * Math.abs(sinTime)))
+        .modulateRotate(osc(3, 0.1).rotate(0.3), 0.2);
+
+      let layer2 = shape(4, 0.5 + 0.2 * Math.sin(time * 2), 0.3)
+        .scale(1.5 + 0.5 * Math.sin(time / 2))
+        .colorama(0.3 + 0.3 * Math.sin(time / 1.5))
+        .rotate(() => 0.1 * Math.cos(time / 2))
+        .luma(0.4 + 0.3 * Math.sin(time / 3), 0.2)
+        .repeat(2, 2);
+
+      layer1.add(layer2, 0.4).out();
+    }
+
+    document.getElementById("hit-btn").addEventListener("click", () => {
+      if (!hydraStarted) {
+        setupHydra();
+        hydraStarted = true;
+        document.getElementById("hit-btn").remove();
+      }
+    });
 </script>
+</html>
